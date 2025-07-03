@@ -3,15 +3,16 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import prettierConfig from 'eslint-config-prettier';
+import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'commitlint.config.js'],
+    ignores: ['eslint.config.mjs',],
   },
   eslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
-  prettierConfig,
+  prettier,
   {
     languageOptions: {
       globals: {
