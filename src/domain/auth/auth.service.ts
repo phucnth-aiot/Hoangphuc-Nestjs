@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -42,7 +46,7 @@ export class AuthService {
     phone: string,
     password: string,
   ): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const existingUser = await this.userService.findOne(phone);
     if (existingUser) {
       throw new ConflictException('Phone already registered');
@@ -57,5 +61,4 @@ export class AuthService {
       password: hashedPassword,
     });
   }
-
 }

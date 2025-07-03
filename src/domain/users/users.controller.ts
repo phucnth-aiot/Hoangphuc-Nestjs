@@ -3,7 +3,7 @@ import { UserService } from "./users.service";
 import { CreateUserDto } from './dtos/create-user.dtos';
 import { UserDto } from './dtos/user.dto';
 import { UserUpdateDto } from './dtos/user-update.dtos';
-import { UserDeleteDto } from './dtos/user-delete.dtos';
+// import { UserDeleteDto } from './dtos/user-delete.dtos';
 
 @Controller('users')
 export class UserController {
