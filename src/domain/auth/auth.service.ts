@@ -1,64 +1,76 @@
+// auth.service.ts
+
 import {
-  ConflictException,
   Injectable,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
-import { UserService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { UserService } from '../users/users.service';
+import { UserEntity } from '../users/entities/users.entity';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
-    private jwtServicer: JwtService,
+    private jwtService: JwtService,
   ) {}
-  async signIn(
-    phone: string,
-    password: string,
-  ): Promise<{ access_token: string }> {
-    // Define a User type or import it if already defined
-    type User = {
-      userid: string;
-      phone: string;
-      password: string;
-      username: string;
-    };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const user = (await this.userService.findOne(phone)) as User;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const passwordMatch = await bcrypt.compare(password, user.password);
+  async validateUser(loginDto: LoginDto): Promise<UserResponseDto>{
+    const user = await this.userService.findOne(loginDto.phone);
+    if (!user) throw new UnauthorizedException('user not found');
 
-    if (!passwordMatch) {
-      throw new UnauthorizedException();
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const payload = { sub: user.userid, username: user.username };
-    return {
-      access_token: await this.jwtServicer.signAsync(payload),
-    };
+    const isMatch = await bcrypt.compare(loginDto.password, user.password);
+    if (!isMatch) throw new UnauthorizedException('inlavid password');
+
+    const { password, refreshToken, ...result } = user;
+    return result as UserResponseDto;
   }
 
-  async signup(
-    username: string,
-    email: string,
-    phone: string,
-    password: string,
-  ): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const existingUser = await this.userService.findOne(phone);
-    if (existingUser) {
-      throw new ConflictException('Phone already registered');
-    }
+  async login(user: UserResponseDto) {
+    const payload = {
+      sub: user.userid,
+      username: user.username,
+      role: user.role,
+    };
+    const access_token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    await this.userService.updateRefreshToken(user.userid, refresh_token);
 
-    await this.userService.create({
-      username,
-      email,
-      phone,
+    return { access_token, refresh_token };
+  }
+
+  async register(dto: RegisterDto) {
+    const existing = await this.userService.findOne(dto.phone);
+    if (existing)
+      throw new ConflictException('Phone number already registered');
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const user = await this.userService.create({
+      ...dto,
       password: hashedPassword,
     });
+    const { password, refreshToken, ...result } = user;
+    return result;
+  }
+
+  async refreshToken(userid: string, refreshToken: string) {
+    const user = await this.userService.findById(userid);
+    if (!user || user.refreshToken !== refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const payload = {
+      sub: user.userid,
+      username: user.username,
+      role: user.role,
+    };
+    const newAccessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    return { access_token: newAccessToken };
   }
 }

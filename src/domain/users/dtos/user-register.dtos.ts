@@ -16,4 +16,6 @@ export class UserRegiterDto {
   @IsNotEmpty()
   @IsString()
   password: string;
+
+  
 }

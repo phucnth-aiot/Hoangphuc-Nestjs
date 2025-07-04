@@ -18,8 +18,8 @@ export class UserService {
         return this.userRepo.find();
     }
 
-    findOne(phone: string){
-        return this.userRepo.findOne({ where: { phone } });
+    async findOne(phone: string){
+        return await this.userRepo.findOne({ where: { phone } });
     }
 
     create(CreateUserDto: CreateUserDto){
@@ -38,5 +38,13 @@ export class UserService {
         // return `user id: ${userid} deleted ${JSON.stringify(UserDeleteDto)}`
         await this.userRepo.delete(userid);
         return { deleted: true };
+    }
+
+    async updateRefreshToken(userid: string, refreshToken: string): Promise<void>{
+        await this.userRepo.update(userid, { refreshToken });
+    }
+
+    async findById(userid: string) {
+        return this.userRepo.findOneBy({ userid });
     }
 }

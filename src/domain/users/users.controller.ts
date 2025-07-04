@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Put, Param, Delete, Body } from "@nestjs/common";
+import { Controller, Get, Post, Put, Param, Delete, Body, UseGuards } from "@nestjs/common";
 import { UserService } from "./users.service";
 import { CreateUserDto } from './dtos/create-user.dtos';
 import { UserDto } from './dtos/user.dto';
 import { UserUpdateDto } from './dtos/user-update.dtos';
+import { AuthGuard } from "@nestjs/passport";
+// import { RolesGuard } from "../auth/jwt-auth/jwt-role.guard";
+import { JwtAuthGuard } from "../auth/jwt-auth/jwt-auth.guard";
 // import { UserDeleteDto } from './dtos/user-delete.dtos';
 
 @Controller('users')
@@ -12,6 +15,11 @@ export class UserController {
   @Get()
   findall(){
     return this.UserService.findAll
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findById(@Param(':id') id: string){
+    return this.UserService.findById(id)
   }
 
   @Post()

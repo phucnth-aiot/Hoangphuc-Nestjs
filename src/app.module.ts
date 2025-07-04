@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './domain/auth/auth.module';
 import { typeOrmConfig } from './config/database.config';
+import { TaskModule } from './domain/task/task.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { typeOrmConfig } from './config/database.config';
       inject: [ConfigService],
       useFactory: typeOrmConfig
     }),
+    TaskModule,
     
   ],
   controllers: [AppController],
